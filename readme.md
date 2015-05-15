@@ -15,3 +15,6 @@ Parameter | Description | Default Value
 `SPRINGBOOTAPP_HOME` | base directory for the spring boot jar |  `/usr/local/$PROJECT_NAME`
 `SPRINGBOOTAPP_WAR` | the jar/war file to start via `java -jar` | `$SPRINGBOOTAPP_HOME/$PROJECT_NAME.war`
 `SPRINGBOOTAPP_JAVA` | java executable for spring boot app, change if you have multiple jdks installed | `$JAVA_HOME/bin/java`
+
+ORIGINALLY FROM https://github.com/rburgst/spring-boot-initscript/
+FORK https://github.com/jcharlet/spring-boot-initscript

@@ -7,44 +7,70 @@
 
 # Source function library.
 [ -f "/etc/rc.d/init.d/functions" ] && . /etc/rc.d/init.d/functions
-[ -z "$JAVA_HOME" -a -x /etc/profile.d/java.sh ] && . /etc/profile.d/java.sh
+#[ -z "$JAVA_HOME" -a -x /etc/profile.d/java.sh ] && . /etc/profile.d/java.sh
 
 
 # the name of the project, will also be used for the war file, log file, ...
-PROJECT_NAME=springboot
+#PROJECT_NAME=springboot
+
 # the user which should run the service
-SERVICE_USER=root
+#SERVICE_USER=root
+
 # base directory for the spring boot jar
-SPRINGBOOTAPP_HOME=/usr/local/$PROJECT_NAME
-export SPRINGBOOTAPP_HOME
+#SPRINGBOOTAPP_HOME=/usr/local/$PROJECT_NAME
+#export SPRINGBOOTAPP_HOME
 
 # the spring boot war-file
-SPRINGBOOTAPP_WAR="$SPRINGBOOTAPP_HOME/$PROJECT_NAME.war"
+#SPRINGBOOTAPP_WAR="$SPRINGBOOTAPP_HOME/$PROJECT_NAME.war"
 
 # java executable for spring boot app, change if you have multiple jdks installed
-SPRINGBOOTAPP_JAVA=$JAVA_HOME/bin/java
+#SPRINGBOOTAPP_JAVA=$JAVA_HOME/bin/java
 
 # spring boot log-file
-LOG="/var/log/$PROJECT_NAME/$PROJECT_NAME.log"
+#LOG="/var/log/$PROJECT_NAME/$PROJECT_NAME.log"
 
 LOCK="/var/lock/subsys/$PROJECT_NAME"
 
+
+
+
 RETVAL=0
 
+
+usage(){
+	echo
+    echo $"Usage: $PROJECT_NAME {start|stop|restart|status|tailLogs}"
+    echo
+    echo "DESCRIPTION"
+    echo
+    echo "  start       start the process"
+    echo
+    echo "  restart     stop the process and start again 1 process"
+    echo
+    echo "  stop        stop the process"
+    echo
+    echo "  status      says if any process for this application is running"
+    echo
+    echo "  tailLogs    shows the current logs"
+    echo "              logs otherwise can be found on $LOG"
+    echo
+}
+
 pid_of_spring_boot() {
-    pgrep -f "java.*$PROJECT_NAME"
+    pgrep -f "java.*${SPRINGBOOTAPP_PROFILES}.*${PROJECT_NAME}"
 }
 
 start() {
     [ -e "$LOG" ] && cnt=`wc -l "$LOG" | awk '{ print $1 }'` || cnt=1
 
-    echo -n $"Starting $PROJECT_NAME: "
+    echo -n $"Starting ${PROJECT_NAME}: "
 
-    cd "$SPRINGBOOTAPP_HOME"
-    su $SERVICE_USER -c "nohup $SPRINGBOOTAPP_JAVA -jar \"$SPRINGBOOTAPP_WAR\"  >> \"$LOG\" 2>&1 &"
+    cd "${SPRINGBOOTAPP_HOME}"
+    #--spring.config.location=file:$SPRINGBOOTAPP_CONF
+    su $SERVICE_USER -c "nohup $SPRINGBOOTAPP_JAVA -Dspring.profiles.active=${SPRINGBOOTAPP_PROFILES} -jar \"${SPRINGBOOTAPP_WAR}\"  > /dev/null 2>&1 &"
 
     while { pid_of_spring_boot > /dev/null ; } &&
-        ! { tail --lines=+$cnt "$LOG" | grep -q ' Started \S+ in' ; } ; do
+        ! { tail --lines=+$(($cnt+1)) "$LOG" | grep -q 'Started .*Application in .* seconds'  ; } ; do
         sleep 1
     done
 
@@ -88,6 +114,10 @@ status() {
     return 3
 }
 
+tailLogs(){
+	tail -f "$LOG";
+}
+
 # See how we were called.
 case "$1" in
     start)
@@ -101,10 +131,14 @@ case "$1" in
         ;;
     restart)
         stop
+        sleep 1;
         start
         ;;
+    tailLogs)
+        tailLogs
+        ;;
     *)
-        echo $"Usage: $0 {start|stop|restart|status}"
+        usage
         exit 1
 esac
 
