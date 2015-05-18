@@ -54,6 +54,8 @@ usage(){
     echo "  tailLogs    shows the current logs"
     echo "              logs otherwise can be found on $LOG"
     echo
+    echo "  checkConfig     returns the configuration used"
+    echo
 }
 
 pid_of_spring_boot() {
@@ -118,6 +120,16 @@ tailLogs(){
 	tail -f "$LOG";
 }
 
+checkConfig() {
+	echo "*************************************************************************************";
+	echo "************** This is the configuration that will be used on next restart **********";
+	echo "*************************************************************************************";
+	echo;
+	echo "location of the configuration file: ${SPRINGBOOTAPP_CONF}"
+	echo;
+	cat ${SPRINGBOOTAPP_CONF}/*
+}
+
 # See how we were called.
 case "$1" in
     start)
@@ -136,6 +148,9 @@ case "$1" in
         ;;
     tailLogs)
         tailLogs
+        ;;
+	checkConfig)
+    	checkConfig
         ;;
     *)
         usage
